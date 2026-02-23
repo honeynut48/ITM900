@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Requirements Search</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 40px;
+        background: #f5f7fa;
+      }
+      input {
+        padding: 10px;
+        width: 300px;
+        font-size: 16px;
+      }
+      button {
+        padding: 10px 16px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      .card {
+        background: white;
+        padding: 16px;
+        margin-top: 16px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      }
+      .title {
+        font-weight: bold;
+        font-size: 18px;
+      }
+      .meta {
+        color: #555;
+        margin: 6px 0;
+      }
+      .content {
+        white-space: pre-wrap;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h2>📚 Requirements Search</h2>
+
+    <input id="search" placeholder="Search requirements..." />
+    <button onclick="search()">Search</button>
+
+    <div id="results"></div>
+
+    <script>
+      async function search() {
+        const q = document.getElementById("search").value;
+
+        const res = await fetch(
+          `http://localhost:3001/search?q=${encodeURIComponent(q)}`
+        );
+
+        const data = await res.json();
+
+        const container = document.getElementById("results");
+        container.innerHTML = "";
+
+        data.forEach(doc => {
+          const div = document.createElement("div");
+          div.className = "card";
+          div.innerHTML = `
+            <div class="title">${doc.title}</div>
+            <div class="meta">Project: ${doc.project}</div>
+            <div class="meta">Artifact Type: ${doc.artifactType}</div>
+            <div class="content">${doc.content.slice(0, 400)}...</div>
+          `;
+          container.appendChild(div);
+        });
+      }
+    </script>
+  </body>
+</html>
