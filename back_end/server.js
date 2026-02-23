@@ -3,16 +3,19 @@ import mongoose from "mongoose";
 import cors from "cors";
 import { Client } from "@elastic/elasticsearch";
 
+// ---- Connections ----
 mongoose.connect("mongodb://localhost:27017/requirements")
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.error("MongoDB error:", err));
 
 const esClient = new Client({ node: "http://localhost:9200" });
 
+// ---- App ----
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ---- Routes ----
 app.get("/search", async (req, res) => {
   try {
     const q = req.query.q || "";
@@ -35,6 +38,7 @@ app.get("/search", async (req, res) => {
   }
 });
 
+// ---- Start Server ----
 app.listen(3001, () => {
   console.log("API running on http://localhost:3001");
 });
