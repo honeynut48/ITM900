@@ -1,78 +1,237 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Requirements Search</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 40px;
-        background: #f5f7fa;
-      }
-      input {
-        padding: 10px;
-        width: 300px;
-        font-size: 16px;
-      }
-      button {
-        padding: 10px 16px;
-        font-size: 16px;
-        cursor: pointer;
-      }
-      .card {
-        background: white;
-        padding: 16px;
-        margin-top: 16px;
-        border-radius: 8px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      }
-      .title {
-        font-weight: bold;
-        font-size: 18px;
-      }
-      .meta {
-        color: #555;
-        margin: 6px 0;
-      }
-      .content {
-        white-space: pre-wrap;
-        margin-top: 10px;
-      }
-    </style>
-  </head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Requirements Search</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <body>
-    <h2>📚 Requirements Search</h2>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --primary: #2563eb;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+    }
 
-    <input id="search" placeholder="Search requirements..." />
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: #111827;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: white;
+      padding: 28px 24px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    header p {
+      margin-top: 6px;
+      opacity: 0.9;
+      font-size: 14px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      background: white;
+      padding: 12px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    .search-bar input {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 15px;
+    }
+
+    .search-bar button {
+      padding: 12px 18px;
+      border-radius: 8px;
+      border: none;
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .search-bar button:hover {
+      opacity: 0.9;
+    }
+
+    .results {
+      display: grid;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 16px 18px;
+      border: 1px solid var(--border);
+      transition: 0.15s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 16px;
+      color: #111827;
+    }
+
+    .meta {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .tags {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .content {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #374151;
+      line-height: 1.5;
+      max-height: 110px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .fade {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background: linear-gradient(transparent, white);
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      margin-top: 40px;
+      font-size: 15px;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📄 Requirements Search</h1>
+  <p>Search across insurance requirements, UI specs, technical docs, and compliance</p>
+</header>
+
+<div class="container">
+
+  <div class="search-bar">
+    <input id="query" placeholder="Search claims, insurance, API, compliance..." />
     <button onclick="search()">Search</button>
+  </div>
 
-    <div id="results"></div>
+  <div id="results" class="results"></div>
 
-    <script>
-      async function search() {
-        const q = document.getElementById("search").value;
+  <div id="empty" class="empty" style="display:none;">
+    No results found. Try a different keyword.
+  </div>
 
-        const res = await fetch(
-          `http://localhost:3001/search?q=${encodeURIComponent(q)}`
-        );
+</div>
 
-        const data = await res.json();
+<footer>
+  ITM900 • Requirements Intelligence Platform
+</footer>
 
-        const container = document.getElementById("results");
-        container.innerHTML = "";
+<script>
+  async function search() {
+    const q = document.getElementById("query").value.trim();
+    const resultsDiv = document.getElementById("results");
+    const emptyDiv = document.getElementById("empty");
 
-        data.forEach(doc => {
-          const div = document.createElement("div");
-          div.className = "card";
-          div.innerHTML = `
-            <div class="title">${doc.title}</div>
-            <div class="meta">Project: ${doc.project}</div>
-            <div class="meta">Artifact Type: ${doc.artifactType}</div>
-            <div class="content">${doc.content.slice(0, 400)}...</div>
-          `;
-          container.appendChild(div);
-        });
-      }
-    </script>
-  </body>
+    resultsDiv.innerHTML = "";
+    emptyDiv.style.display = "none";
+
+    if (!q) return;
+
+    const res = await fetch(`http://localhost:3001/search?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+
+    if (!data.length) {
+      emptyDiv.style.display = "block";
+      return;
+    }
+
+    data.forEach(doc => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      card.innerHTML = `
+        <h3>${doc.title}</h3>
+        <div class="meta">${doc.project || "Unknown Project"}</div>
+        <div class="tags">
+          <span class="tag">${doc.artifactType || "Document"}</span>
+        </div>
+        <div class="content">
+          ${doc.content.replace(/\n/g, "<br>").slice(0, 800)}
+          <div class="fade"></div>
+        </div>
+      `;
+
+      resultsDiv.appendChild(card);
+    });
+  }
+
+  document.getElementById("query").addEventListener("keydown", e => {
+    if (e.key === "Enter") search();
+  });
+</script>
+
+</body>
 </html>
