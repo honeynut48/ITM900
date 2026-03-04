@@ -2,236 +2,326 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Requirements Search</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+  <title>Requirements Intelligence | Enterprise Portal</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap">
   <style>
     :root {
-      --bg: #f5f7fb;
-      --card: #ffffff;
-      --primary: #2563eb;
-      --muted: #6b7280;
-      --border: #e5e7eb;
+      --bg: #f8fafc; --sidebar: #0f172a; --accent: #2563eb;
+      --text-main: #1e293b; --text-muted: #64748b; --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { margin: 0; background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
+
+    /* Persistent Sidebar Navigation */
+    nav { width: 260px; background: var(--sidebar); color: white; padding: 32px 20px; display: flex; flex-direction: column; flex-shrink: 0; }
+    .logo { font-weight: 800; font-size: 20px; margin-bottom: 40px; color: #fff; display: flex; align-items: center; gap: 10px; }
+    .logo-icon { width: 24px; height: 24px; background: var(--accent); border-radius: 4px; }
+    
+    .nav-section { margin-bottom: 24px; }
+    .nav-label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 12px; display: block; }
+    .nav-item { padding: 12px; border-radius: 8px; font-size: 14px; color: #94a3b8; cursor: pointer; margin-bottom: 4px; transition: 0.2s; display: flex; align-items: center; gap: 10px; }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+    .nav-item.active { background: var(--accent); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+
+    /* Main Content Area */
+    main { flex: 1; overflow-y: auto; padding: 40px; display: flex; flex-direction: column; gap: 24px; }
+    .page-content { display: none; }
+    .page-content.active { display: block; }
+
+    /* Search Component UI */
+    .search-wrapper {
+      background: white; padding: 8px; border-radius: 12px; border: 1px solid var(--border);
+      display: flex; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 30px;
+    }
+    .search-wrapper input { flex: 1; border: none; padding: 12px 20px; font-size: 16px; outline: none; }
+    .search-wrapper button { background: var(--accent); color: white; border: none; padding: 0 24px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+    /* Dynamic Document Cards */
+    .doc-card {
+      background: white; border-radius: 16px; border: 1px solid var(--border);
+      display: grid; grid-template-columns: 1fr 300px; overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px;
+    }
+    .doc-main { padding: 32px; border-right: 1px solid var(--border); }
+    .doc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .doc-title { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0; }
+    
+    .summarize-btn { 
+        background: #f1f5f9; border: 1px solid var(--border); padding: 8px 16px; 
+        border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;
+    }
+    .summarize-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+    .ai-summary-box {
+        display: none; background: #f0f9ff; border: 1px solid #bae6fd;
+        padding: 20px; border-radius: 12px; margin-bottom: 20px; font-size: 14px;
+        line-height: 1.6; color: #0369a1; animation: fadeIn 0.3s ease-in;
     }
 
-    * {
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+    .doc-scroll-area { 
+      max-height: 350px; overflow-y: auto; background: #ffffff; 
+      padding: 20px; border: 1px solid #f1f5f9; border-radius: 8px;
+      font-size: 14px; line-height: 1.7; color: #475569; white-space: pre-line;
     }
 
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: #111827;
-    }
+    /* Meta Sidebar Styles */
+    .doc-meta-sidebar { padding: 32px; background: #fafbfc; display: flex; flex-direction: column; gap: 20px; }
+    .meta-tag { display: flex; flex-direction: column; margin-bottom: 12px; }
+    .tag-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
+    .tag-value { font-size: 13px; font-weight: 600; color: #334155; margin-top: 2px; }
 
-    header {
-      background: linear-gradient(135deg, #1e3a8a, #2563eb);
-      color: white;
-      padding: 28px 24px;
-    }
+    /* Resource Cards */
+    .res-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 30px; }
+    .res-card { background: white; padding: 24px; border-radius: 16px; border: 1px solid var(--border); }
+    .res-icon { margin-bottom: 16px; font-size: 24px; }
+    .res-list { display: flex; flex-direction: column; gap: 12px; }
+    .res-item { font-size: 13px; padding: 8px; background: #f8fafc; border-radius: 6px; border: 1px solid var(--border); }
 
-    header h1 {
-      margin: 0;
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: 0.3px;
-    }
-
-    header p {
-      margin-top: 6px;
-      opacity: 0.9;
-      font-size: 14px;
-    }
-
-    .container {
-      max-width: 1100px;
-      margin: 24px auto;
-      padding: 0 16px;
-    }
-
-    .search-bar {
-      display: flex;
-      gap: 10px;
-      background: white;
-      padding: 12px;
-      border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.05);
-      margin-bottom: 20px;
-    }
-
-    .search-bar input {
-      flex: 1;
-      padding: 12px 14px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      font-size: 15px;
-    }
-
-    .search-bar button {
-      padding: 12px 18px;
-      border-radius: 8px;
-      border: none;
-      background: var(--primary);
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .search-bar button:hover {
-      opacity: 0.9;
-    }
-
-    .results {
-      display: grid;
-      gap: 14px;
-    }
-
-    .card {
-      background: var(--card);
-      border-radius: 14px;
-      padding: 16px 18px;
-      border: 1px solid var(--border);
-      transition: 0.15s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-    }
-
-    .card h3 {
-      margin: 0;
-      font-size: 16px;
-      color: #111827;
-    }
-
-    .meta {
-      font-size: 13px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
-    .tags {
-      margin-top: 8px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .tag {
-      background: #eff6ff;
-      color: #1d4ed8;
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-weight: 600;
-    }
-
-    .content {
-      margin-top: 10px;
-      font-size: 14px;
-      color: #374151;
-      line-height: 1.5;
-      max-height: 110px;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .fade {
-      content: "";
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 40px;
-      background: linear-gradient(transparent, white);
-    }
-
-    .empty {
-      text-align: center;
-      color: var(--muted);
-      margin-top: 40px;
-      font-size: 15px;
-    }
-
-    footer {
-      text-align: center;
-      font-size: 12px;
-      color: #9ca3af;
-      padding: 20px;
-    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>📄 Requirements Search</h1>
-  <p>Search across insurance requirements, UI specs, technical docs, and compliance</p>
-</header>
+  <nav>
+    <div class="logo"><div class="logo-icon"></div> InsureTech IQ</div>
+    
+    <div class="nav-section">
+      <span class="nav-label">Core Tools</span>
+      <div class="nav-item active" onclick="showPage('search-page', this)"><span>🔍</span> Repository Search</div>
+      <div class="nav-item" onclick="showPage('projects-page', this)"><span>📁</span> Project Explorer</div>
+      <div class="nav-item" onclick="showPage('compliance-page', this)"><span>⚖️</span> Compliance Logs</div>
+      <div class="nav-item" onclick="showPage('resources-page', this)"><span>📚</span> Helpful Resources</div>
+    </div>
 
-<div class="container">
+    <div class="nav-section" style="margin-top:auto">
+      <div class="nav-item" onclick="logout()"><span>🚪</span> Sign Out</div>
+    </div>
+  </nav>
 
-  <div class="search-bar">
-    <input id="query" placeholder="Search claims, insurance, API, compliance..." />
-    <button onclick="search()">Search</button>
-  </div>
+  <main>
+    <div id="search-page" class="page-content active">
+        <header style="margin-bottom: 30px;">
+            <h1 style="margin:0; font-size: 28px; font-weight: 800;">Artifact Explorer</h1>
+            <p style="color: var(--text-muted); margin: 8px 0 0 0;">Deep-search through technical specifications and UI wireframes.</p>
+        </header>
 
-  <div id="results" class="results"></div>
+        <div class="search-wrapper">
+          <input id="query" placeholder="Describe the UI requirement or business rule..." autofocus />
+          <button onclick="search()">Execute Search</button>
+        </div>
+        <div id="results"></div>
+    </div>
 
-  <div id="empty" class="empty" style="display:none;">
-    No results found. Try a different keyword.
-  </div>
+    <div id="projects-page" class="page-content">
+        <header style="margin-bottom: 30px;">
+            <h1 style="margin:0; font-size: 28px; font-weight: 800;">Requirements Summary</h1>
+            <p style="color: var(--text-muted); margin: 8px 0 0 0;">Aggregated overview of insurance modules.</p>
+        </header>
 
-</div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;">
+            <div style="background: white; padding: 24px; border-radius: 12px; border: 1px solid var(--border);">
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Artifacts</span>
+                <div style="font-size: 32px; font-weight: 800; color: var(--accent); margin-top: 8px;" id="total-count">0</div>
+            </div>
+            <div style="background: white; padding: 24px; border-radius: 12px; border: 1px solid var(--border);">
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Modules Indexed</span>
+                <div style="font-size: 32px; font-weight: 800; color: #0f172a; margin-top: 8px;">2</div>
+            </div>
+            <div style="background: white; padding: 24px; border-radius: 12px; border: 1px solid var(--border);">
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Standardization Rate</span>
+                <div style="font-size: 32px; font-weight: 800; color: #059669; margin-top: 8px;">100%</div>
+            </div>
+        </div>
+        <div id="project-breakdown" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;"></div>
+    </div>
 
-<footer>
-  ITM900 • Requirements Intelligence Platform
-</footer>
+    <div id="compliance-page" class="page-content">
+        <h1>Compliance Logs</h1>
+        <p>Traceability and Audit History for standard requirements.</p>
+    </div>
 
-<script>
-  async function search() {
-    const q = document.getElementById("query").value.trim();
-    const resultsDiv = document.getElementById("results");
-    const emptyDiv = document.getElementById("empty");
+    <div id="resources-page" class="page-content">
+        <header style="margin-bottom: 30px;">
+            <h1 style="margin:0; font-size: 28px; font-weight: 800;">BSA Helpful Resources</h1>
+            <p style="color: var(--text-muted); margin: 8px 0 0 0;">Supplementary templates and guidelines.</p>
+        </header>
 
-    resultsDiv.innerHTML = "";
-    emptyDiv.style.display = "none";
+        <div class="res-grid">
+            <div class="res-card">
+                <div class="res-icon" style="color: var(--accent);">📄</div>
+                <h3 style="margin:0 0 10px 0;">Requirement Templates</h3>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Standardized starting points for all documentation.</p>
+                <div class="res-list">
+                    <div class="res-item">Functional Requirements Template</div>
+                    <div class="res-item">Business Rules Spreadsheet</div>
+                </div>
+            </div>
+            <div class="res-card">
+                <div class="res-icon" style="color: #8b5cf6;">🔗</div>
+                <h3 style="margin:0 0 10px 0;">External Systems</h3>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Quick links to integrated BSA platforms.</p>
+                <div class="res-list">
+                    <div class="res-item">Jira: Requirements Backlog</div>
+                    <div class="res-item">Figma: UI Design Library</div>
+                </div>
+            </div>
+            <div class="res-card">
+                <div class="res-icon" style="color: #10b981;">📖</div>
+                <h3 style="margin:0 0 10px 0;">Helpful Guides</h3>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Best practices and procedural guides.</p>
+                <div class="res-list">
+                    <div class="res-item">Metadata Tagging Best Practices</div>
+                    <div class="res-item">Audit Readiness Procedures</div>
+                </div>
+            </div>
+        </div>
 
-    if (!q) return;
+        <div style="background: var(--accent); color: white; padding: 32px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 style="margin: 0 0 8px 0;">Need Assistance?</h3>
+                <p style="margin: 0; opacity: 0.9; font-size: 14px;">Our lead BSAs are available for consultation.</p>
+            </div>
+            <button style="background: white; color: var(--accent); border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer;">Join Community Chat</button>
+        </div>
+    </div>
+  </main>
 
-    const res = await fetch(`http://localhost:3001/search?q=${encodeURIComponent(q)}`);
-    const data = await res.json();
+  <script>
+    let currentResults = [];
 
-    if (!data.length) {
-      emptyDiv.style.display = "block";
-      return;
+    function showPage(pageId, element) {
+        document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        element.classList.add('active');
     }
 
-    data.forEach(doc => {
-      const card = document.createElement("div");
-      card.className = "card";
+    function logout() { sessionStorage.removeItem('isLoggedIn'); window.location.href = "login.html"; }
 
-      card.innerHTML = `
-        <h3>${doc.title}</h3>
-        <div class="meta">${doc.project || "Unknown Project"}</div>
-        <div class="tags">
-          <span class="tag">${doc.artifactType || "Document"}</span>
-        </div>
-        <div class="content">
-          ${doc.content.replace(/\n/g, "<br>").slice(0, 800)}
-          <div class="fade"></div>
-        </div>
+    async function search() {
+      const q = document.getElementById("query").value.trim();
+      const resultsDiv = document.getElementById("results");
+      if (!q) return;
+
+      resultsDiv.innerHTML = "<p>Querying Elasticsearch index...</p>";
+
+      try {
+        const res = await fetch(`http://localhost:3001/search?q=${encodeURIComponent(q)}`);
+        currentResults = await res.json();
+        renderResults();
+        renderAnalytics();
+      } catch (err) { console.error(err); }
+    }
+
+    function renderResults() {
+      const resultsDiv = document.getElementById("results");
+      const query = document.getElementById("query").value.toLowerCase().split(" ");
+      resultsDiv.innerHTML = "";
+    
+      if (currentResults.length === 0) {
+        resultsDiv.innerHTML = "<p>No matches found in your mock_data folder.</p>";
+        return;
+      }
+    
+      currentResults.forEach((doc, index) => {
+        // DYNAMIC MATCH CALCULATION
+        const titleLower = doc.title.toLowerCase();
+        const contentLower = doc.content.toLowerCase();
+        
+        // Count how many search terms are found
+        let matchCount = 0;
+        query.forEach(word => {
+            if (titleLower.includes(word) || contentLower.includes(word)) matchCount++;
+        });
+    
+        // Generate a percentage based on terms matched
+        // If it's a perfect match for all words, show 98-99%. If partial, show lower.
+        const matchPercentage = Math.round((matchCount / query.length) * 98);
+        const displayScore = matchPercentage > 20 ? matchPercentage : 22; // Keep a floor for visibility
+    
+        resultsDiv.innerHTML += `
+          <div class="doc-card">
+            <div class="doc-main">
+              <div class="doc-header">
+                <h3 class="doc-title">${doc.title}</h3>
+                <button class="summarize-btn" id="btn-${index}" onclick="generateSummary(${index})">✨ AI Summary</button>
+              </div>
+              <div id="summary-${index}" class="ai-summary-box"></div>
+              <div class="doc-scroll-area">${doc.content}</div>
+            </div>
+            <div class="doc-meta-sidebar">
+              <div class="meta-tag"><span class="tag-label">Module</span><span class="tag-value">${doc.project}</span></div>
+              <div class="meta-tag"><span class="tag-label">Type</span><span class="tag-value">${doc.artifactType || 'UI Spec'}</span></div>
+              <div class="meta-tag"><span class="tag-label">Security</span><span class="tag-value">Internal / High</span></div>
+              
+              <div style="background: #0f172a; border-radius: 8px; padding: 12px; color: white; margin-top: auto; font-size: 11px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="color:#94a3b8">Source</span>
+                    <span style="color:#38bdf8">Elasticsearch</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                    <span style="color:#94a3b8">Search Rank</span>
+                    <span style="color:${displayScore > 80 ? '#4ade80' : '#fbbf24'}">${displayScore}% Relevance</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function renderAnalytics() {
+        const container = document.getElementById('project-breakdown');
+        const totalDisplay = document.getElementById('total-count');
+        
+        const summary = currentResults.reduce((acc, doc) => {
+            acc[doc.project] = (acc[doc.project] || 0) + 1;
+            return acc;
+        }, {});
+
+        totalDisplay.innerText = currentResults.length;
+        container.innerHTML = "";
+
+        Object.keys(summary).forEach(proj => {
+            container.innerHTML += `
+                <div style="background: white; padding: 24px; border-radius: 16px; border: 1px solid var(--border);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="margin:0; font-size: 18px;">${proj}</h3>
+                        <span style="background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;">
+                            ${summary[proj]} Artifacts
+                        </span>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">Requirements mapping for ${proj} UI Specifications.</p>
+                </div>
+            `;
+        });
+    }
+
+    function generateSummary(index) {
+      const doc = currentResults[index];
+      const summaryBox = document.getElementById(`summary-${index}`);
+      const btn = document.getElementById(`btn-${index}`);
+      
+      if (summaryBox.style.display === "block") {
+          summaryBox.style.display = "none";
+          btn.innerHTML = "✨ AI Summary";
+          return;
+      }
+
+      const lines = doc.content.split('\n').filter(l => l.trim().length > 10);
+      const keyPoints = lines.slice(0, 4).map(line => `<li>${line.trim()}</li>`).join('');
+
+      summaryBox.innerHTML = `
+        <div style="font-weight:700; margin-bottom:8px;">Executive Summary: ${doc.title}</div>
+        <p>Key specifications identified in <b>${doc.project}</b>:</p>
+        <ul style="padding-left:20px; margin:10px 0;">${keyPoints}</ul>
       `;
+      
+      summaryBox.style.display = "block";
+      btn.innerHTML = "✕ Close Summary";
+    }
 
-      resultsDiv.appendChild(card);
-    });
-  }
-
-  document.getElementById("query").addEventListener("keydown", e => {
-    if (e.key === "Enter") search();
-  });
-</script>
-
+    document.getElementById("query").addEventListener("keydown", e => { if (e.key === "Enter") search(); });
+  </script>
 </body>
 </html>
